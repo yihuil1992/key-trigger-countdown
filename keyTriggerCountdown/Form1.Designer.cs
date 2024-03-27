@@ -41,7 +41,8 @@
             this.timeDisplay.AutoSize = true;
             this.timeDisplay.FontSize = MetroFramework.MetroLabelSize.Tall;
             this.timeDisplay.FontWeight = MetroFramework.MetroLabelWeight.Bold;
-            this.timeDisplay.Location = new System.Drawing.Point(92, 106);
+            this.timeDisplay.Location = new System.Drawing.Point(123, 132);
+            this.timeDisplay.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.timeDisplay.Name = "timeDisplay";
             this.timeDisplay.Size = new System.Drawing.Size(17, 25);
             this.timeDisplay.TabIndex = 0;
@@ -52,18 +53,20 @@
             // 
             // startBtn
             // 
-            this.startBtn.Location = new System.Drawing.Point(71, 150);
+            this.startBtn.Location = new System.Drawing.Point(95, 188);
+            this.startBtn.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.startBtn.Name = "startBtn";
-            this.startBtn.Size = new System.Drawing.Size(75, 23);
+            this.startBtn.Size = new System.Drawing.Size(100, 29);
             this.startBtn.TabIndex = 1;
             this.startBtn.Text = "Start";
             this.startBtn.Click += new System.EventHandler(this.startBtn_Click);
             // 
             // secondInput
             // 
-            this.secondInput.Location = new System.Drawing.Point(92, 69);
+            this.secondInput.Location = new System.Drawing.Point(123, 86);
+            this.secondInput.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.secondInput.Name = "secondInput";
-            this.secondInput.Size = new System.Drawing.Size(54, 23);
+            this.secondInput.Size = new System.Drawing.Size(72, 29);
             this.secondInput.TabIndex = 2;
             this.secondInput.Text = "9";
             this.secondInput.Click += new System.EventHandler(this.secondInput_Click);
@@ -76,7 +79,7 @@
             // comboBoxTriggerKey
             // 
             this.comboBoxTriggerKey.FormattingEnabled = true;
-            this.comboBoxTriggerKey.ItemHeight = 23;
+            this.comboBoxTriggerKey.ItemHeight = 24;
             this.comboBoxTriggerKey.Items.AddRange(new object[] {
             "F1",
             "F2",
@@ -100,22 +103,25 @@
             "D7",
             "D8",
             "D9"});
-            this.comboBoxTriggerKey.Location = new System.Drawing.Point(9, 69);
+            this.comboBoxTriggerKey.Location = new System.Drawing.Point(12, 86);
+            this.comboBoxTriggerKey.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.comboBoxTriggerKey.Name = "comboBoxTriggerKey";
-            this.comboBoxTriggerKey.Size = new System.Drawing.Size(64, 29);
+            this.comboBoxTriggerKey.Size = new System.Drawing.Size(84, 30);
             this.comboBoxTriggerKey.TabIndex = 3;
             this.comboBoxTriggerKey.SelectedIndexChanged += new System.EventHandler(this.comboBoxTriggerKey_SelectedIndexChanged);
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(218, 196);
+            this.ClientSize = new System.Drawing.Size(291, 245);
             this.Controls.Add(this.comboBoxTriggerKey);
             this.Controls.Add(this.secondInput);
             this.Controls.Add(this.startBtn);
             this.Controls.Add(this.timeDisplay);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "Form1";
+            this.Padding = new System.Windows.Forms.Padding(27, 75, 27, 25);
             this.Text = "Countdown";
             this.ResumeLayout(false);
             this.PerformLayout();

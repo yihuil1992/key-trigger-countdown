@@ -1,15 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Header;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using System.Reflection.Emit;
 
 namespace keyTriggerCountdown
 {
@@ -32,6 +22,12 @@ namespace keyTriggerCountdown
         {
             // 输出按下的键
             Console.WriteLine(e.KeyPressed);
+
+            if (comboBoxTriggerKey.SelectedItem == null)
+            {
+                return;
+            }
+
             // 如果按下的是F1键，触发按钮的Click事件
             if (e.KeyPressed.ToString() == comboBoxTriggerKey.SelectedItem.ToString())
             {
