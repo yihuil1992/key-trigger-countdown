@@ -7,6 +7,7 @@ namespace keyTriggerCountdown
     {
         private GlobalKeyboardHook keyboardHook;
         private int timeLeft; // 倒计时剩余的秒数
+        private int soundTriggerSecond; // 提示音触发时间
         private System.Media.SoundPlayer soundPlayer;
 
 
@@ -29,7 +30,8 @@ namespace keyTriggerCountdown
             }
 
             // 如果按下的是F1键，触发按钮的Click事件
-            if (e.KeyPressed.ToString() == comboBoxTriggerKey.SelectedItem.ToString())
+            if (e.KeyPressed.ToString() == comboBoxTriggerKey.SelectedItem.ToString()
+                && timer1.Enabled)
             {
                 startBtn_Click(this, new EventArgs());
             }
@@ -73,7 +75,10 @@ namespace keyTriggerCountdown
                 timeLeft--; // 减少剩余秒数
                 timeDisplay.Text = timeLeft.ToString(); // 更新显示
 
-                if (timeLeft <= 5)
+
+
+                if (int.TryParse(soundTriggerTime.Text, out soundTriggerSecond)
+                    && timeLeft <= soundTriggerSecond)
                 {
                     soundPlayer.Play(); // 播放提示音
                 }
@@ -99,6 +104,22 @@ namespace keyTriggerCountdown
         }
 
         private void timeDisplay_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void stopBtn_Click(object sender, EventArgs e)
+        {
+            timer1.Stop();
+            timeDisplay.Text = "Stopped";
+        }
+
+        private void metroLabel1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void soundTriggerTime_Click(object sender, EventArgs e)
         {
 
         }
