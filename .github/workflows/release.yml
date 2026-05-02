@@ -1,0 +1,78 @@
+name: Release Tauri App
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version. Leave blank to use 1.0.<run number>."
+        required: false
+        type: string
+      draft:
+        description: "Create the GitHub release as a draft."
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  VERSION_PREFIX: "1.0"
+
+jobs:
+  release-windows:
+    name: Build and release Windows app
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Resolve release version
+        shell: pwsh
+        run: |
+          $manualVersion = "${{ inputs.version }}".Trim()
+
+          if ($manualVersion) {
+            $version = $manualVersion
+          } else {
+            $version = "${{ env.VERSION_PREFIX }}.${{ github.run_number }}"
+          }
+
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
+            throw "Version '$version' is not valid semver. Use a value like 1.0.12 or 1.0.12-beta.1."
+          }
+
+          "APP_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TAG_NAME=v$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_NAME=Key Trigger Countdown v$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Apply release version to manifests
+        run: node .github/scripts/apply-release-version.mjs
+
+      - name: Build and publish release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ env.TAG_NAME }}
+          releaseName: ${{ env.RELEASE_NAME }}
+          releaseBody: |
+            Windows build for Key Trigger Countdown.
+
+            Download the NSIS setup executable or MSI installer from the assets below.
+          releaseDraft: ${{ inputs.draft }}
+          prerelease: false
+          releaseAssetNamePattern: "[name]_[version]_[platform]_[arch][setup][ext]"

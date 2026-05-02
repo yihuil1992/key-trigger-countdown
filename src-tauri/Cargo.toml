@@ -1,0 +1,23 @@
+[package]
+name = "key-trigger-countdown"
+version = "1.0.0"
+description = "A compact key-triggered countdown instrument."
+authors = ["yihui"]
+edition = "2021"
+
+[lib]
+name = "key_trigger_countdown_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+  "Win32_Foundation",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging"
+] }
