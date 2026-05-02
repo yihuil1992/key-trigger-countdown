@@ -63,7 +63,7 @@ jobs:
         run: node .github/scripts/apply-release-version.mjs
 
       - name: Build and publish release
-        uses: tauri-apps/tauri-action@v1
+        uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -75,4 +75,4 @@ jobs:
             Download the NSIS setup executable or MSI installer from the assets below.
           releaseDraft: ${{ inputs.draft }}
           prerelease: false
-          releaseAssetNamePattern: "[name]_[version]_[platform]_[arch][setup][ext]"
+          assetNamePattern: "[name]_[version]_[platform]_[arch][setup][ext]"
