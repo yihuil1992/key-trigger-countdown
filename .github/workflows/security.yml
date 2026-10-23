@@ -1,0 +1,73 @@
+name: OSV security
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  schedule:
+    - cron: '23 4 * * *' # Daily, 04:23 UTC, on the default branch.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependencies:
+    name: npm and Windows dependency security
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      RUSTUP_TOOLCHAIN: 1.90.0
+    steps:
+      - name: Initialize isolated paths
+        shell: pwsh
+        run: |
+          "CARGO_HOME=$env:RUNNER_TEMP/osv-cargo" >> $env:GITHUB_ENV
+          "OSV_SCANNER=$env:RUNNER_TEMP/osv-scanner.exe" >> $env:GITHUB_ENV
+          "OSV_REPORT_DIR=$env:RUNNER_TEMP/osv-reports" >> $env:GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.21.0
+          package-manager-cache: false
+
+      - name: Test classification and graph validation
+        run: node --test .github/scripts/osv-policy.test.mjs
+
+      - name: Install pinned Cargo toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal --no-self-update
+
+      - name: Download and verify official OSV-Scanner
+        shell: pwsh
+        run: |
+          @'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          import { SCANNER } from './.github/scripts/osv-policy.mjs';
+          const response = await fetch(SCANNER.url);
+          if (!response.ok) throw new Error('OSV download failed: ' + response.status);
+          const binary = Buffer.from(await response.arrayBuffer());
+          const hash = crypto.createHash('sha256').update(binary).digest('hex');
+          if (hash !== SCANNER.sha256) throw new Error('OSV checksum mismatch');
+          fs.writeFileSync(process.env.OSV_SCANNER, binary);
+          console.log('Verified OSV-Scanner ' + SCANNER.version + ': ' + hash);
+          '@ | node --input-type=module
+
+      - name: Scan full lockfiles and apply Windows gate
+        shell: pwsh
+        run: node .github/scripts/osv-check.mjs --scanner "$env:OSV_SCANNER" --output "$env:OSV_REPORT_DIR"
+
+      - name: Retain full reports and diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: osv-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.OSV_REPORT_DIR }}
+          if-no-files-found: error
+          retention-days: 14
