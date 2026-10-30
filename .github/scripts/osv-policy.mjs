@@ -11,6 +11,13 @@ export const key = p => `${p.name}@${p.version}`;
 const sameSet = (a, b, message) => assert.deepEqual([...a].sort(), [...b].sort(), message);
 const array = (value, label) => { assert.ok(Array.isArray(value), `${label}: expected array`); return value; };
 
+// crates.io aliases apply only to advisory matching, never lockfile/graph identities.
+function affectedPackage(a, p, ecosystem) {
+  const name = a.package?.name;
+  return a.package?.ecosystem === ecosystem && typeof name === 'string' &&
+    (name === p.name || (ecosystem === 'crates.io' && name.replaceAll('_', '-') === p.name.replaceAll('_', '-')));
+}
+
 // Intentionally supports Cargo-generated lockfile v3/v4, not arbitrary TOML.
 // Unsupported sources/layouts fail closed instead of being scanned as crates.io.
 export function inventory(npm, cargoText) {
@@ -127,7 +134,7 @@ export function classify(scan, scannerExit, locked, graphs) {
           assert.equal(matches.length, 1, 'Advisory group mismatch'); covered.push(id); return matches[0];
         });
         const infos = members.map(v => {
-          const affected = array(v.affected, 'affected packages').filter(a => a.package?.name === p.name && a.package.ecosystem === ecosystem);
+          const affected = array(v.affected, 'affected packages').filter(a => affectedPackage(a, p, ecosystem));
           assert.ok(affected.length, 'Advisory missing affected package');
           return affected.map(a => a.database_specific?.informational);
         }).flat();
@@ -138,7 +145,7 @@ export function classify(scan, scannerExit, locked, graphs) {
           ecosystem, name: p.name, version: p.version, ids, category, inScope,
           scope: ecosystem === 'npm' ? 'npm (all groups/platforms)' : inScope ? 'selected Windows normal/build/proc-macro' : metadata.has(key(p)) ? 'Windows metadata only: inactive/dev dependencies' : 'outside Windows metadata for both profiles',
           summaries: [...new Set(members.map(v => v.summary ?? v.id))],
-          fixed: [...new Set(members.flatMap(v => v.affected.filter(a => a.package?.name === p.name && a.package.ecosystem === ecosystem).flatMap(a => (a.ranges ?? []).flatMap(r => (r.events ?? []).filter(e => e.fixed).map(e => e.fixed)))))],
+          fixed: [...new Set(members.flatMap(v => v.affected.filter(a => affectedPackage(a, p, ecosystem)).flatMap(a => (a.ranges ?? []).flatMap(r => (r.events ?? []).filter(e => e.fixed).map(e => e.fixed)))))],
         });
       }
       sameSet(covered, advisories.map(v => v.id), 'Ungrouped or duplicate advisory');

@@ -154,3 +154,48 @@ test('fix versions belong to the reported package, not another affected package'
   v.affected.push({ package: { name: 'other', ecosystem: 'crates.io' }, ranges: [{ events: [{ fixed: '9.9.9' }] }] });
   assert.deepEqual(evaluate(f, 1).blocking[0].fixed, ['1.0.1']);
 });
+
+test('Cargo underscore advisory spelling retains blocking findings and fixed versions', () => {
+  const f = fixture(); finding(f, 'release-only', 'unsound');
+  const row = f.scan.results[1].packages.find(p => p.package.name === 'release-only');
+  row.vulnerabilities[0].affected[0].package.name = 'release_only';
+  row.vulnerabilities[0].affected.push(
+    { package: { name: 'release_other', ecosystem: 'crates.io' }, ranges: [{ events: [{ fixed: '9.9.9' }] }] },
+    { package: { name: 'release_only', ecosystem: 'npm' }, ranges: [{ events: [{ fixed: '8.8.8' }] }] },
+  );
+  const r = evaluate(f, 1, f.tree + '1release-only v1.0.0|\n');
+  assert.equal(r.blocking.length, 1);
+  assert.equal(r.blocking[0].name, 'release-only');
+  assert.equal(r.blocking[0].category, 'soundness');
+  assert.deepEqual(r.blocking[0].fixed, ['1.0.1']);
+});
+
+test('Cargo hyphen advisory spelling preserves the original outside-target identity', () => {
+  const f = fixture();
+  f.locked.cargo.find(p => p.name === 'linux-only').name = 'linux_only';
+  const row = f.scan.results[1].packages.find(p => p.package.name === 'linux-only');
+  row.package.name = 'linux_only';
+  finding(f, 'linux_only');
+  row.vulnerabilities[0].affected[0].package.name = 'linux-only';
+  const r = evaluate(f, 1);
+  assert.equal(r.blocking.length, 0);
+  assert.equal(r.outsideTarget.length, 1);
+  assert.equal(r.outsideTarget[0].name, 'linux_only');
+  assert.deepEqual(r.outsideTarget[0].fixed, ['1.0.1']);
+});
+
+test('affected package matching fails closed for npm aliases, unrelated names, ecosystems and malformed names', () => {
+  for (const [name, affectedPackage] of [
+    ['npm-package', { name: 'npm_package', ecosystem: 'npm' }],
+    ['release-only', { name: 'release_other', ecosystem: 'crates.io' }],
+    ['release-only', { name: 'release-only', ecosystem: 'npm' }],
+    ['release-only', { name: 'release_only', ecosystem: 'npm' }],
+    ['release-only', { ecosystem: 'crates.io' }],
+    ['release-only', { name: 42, ecosystem: 'crates.io' }],
+  ]) {
+    const f = fixture(); finding(f, name);
+    const row = f.scan.results.flatMap(r => r.packages).find(p => p.package.name === name);
+    row.vulnerabilities[0].affected[0].package = affectedPackage;
+    assert.throws(() => evaluate(f, 1), /Advisory missing affected package/);
+  }
+});
